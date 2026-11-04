@@ -195,20 +195,37 @@ async function loadAllDataFromSupabase() {
             $('sidebarMobileDisplay').innerText = S.mobile ? S.mobile : "Add Mobile No.";
             $('sidebarEmailDisplay').innerText = S.email ? S.email : "Add Email in Profile";
 
+            
+
+
             const defaultLogo = "https://placehold.co/100x100/d4af37/ffffff?text=Logo";
             const logoUrl = settings.logo_url || defaultLogo;
             $('storeLogoPreview').src = logoUrl;
             $('storeProfileAvatar').src = logoUrl;
             $('catStoreLogo').src = logoUrl;
 
-            if (settings.owner_photo_url) {
-                $('ownerPhotoPreview').src = settings.owner_photo_url;
-            }
-            if (settings.banner_url) {
-                $('storePhotoPreview').src = settings.banner_url;
-                $('profileBannerImg').src = settings.banner_url;
-                if ($('slideImg1')) $('slideImg1').src = settings.banner_url;
-            }
+            // Owner photo reset agar null ho
+            $('ownerPhotoPreview').src = settings.owner_photo_url || "https://placehold.co/100x100/d4af37/ffffff?text=Owner";
+
+            // Banner aur Slideshow reset agar null ho
+            const defaultBanner = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop&q=60";
+            const bannerUrl = settings.banner_url || defaultBanner;
+            $('storePhotoPreview').src = bannerUrl;
+            $('profileBannerImg').src = bannerUrl;
+            if ($('slideImg1')) $('slideImg1').src = bannerUrl;
+           
+
+
+
+
+
+
+
+
+
+
+
+           
 
             $('baseGoldRateInput').value = settings.gold_rate_24k || '';
             $('baseSilverRateInput').value = settings.silver_rate_kg || '';

@@ -144,8 +144,7 @@ function updateAuthUIVisibility() {
 }
 
 /* ==========================================
-   3. FETCH STORE-SPECIFIC DATA FROM SUPABASE
-   ========================================== */
+   3. FETCH STORE-SPECIFIC DATA FROM SUPABASE */
 async function loadAllDataFromSupabase() {
     try {
         let { data: settings } = await supabaseClient
@@ -154,7 +153,7 @@ async function loadAllDataFromSupabase() {
             .eq('id', currentStoreId)
             .maybeSingle();
 
-        if (!settings) {
+        if (!settings && !isOwner) {
             const { data: firstStore } = await supabaseClient
                 .from('store_settings')
                 .select('*')
@@ -212,30 +211,38 @@ async function loadAllDataFromSupabase() {
             recalculateMetalRates();
         }
 
-        const filterByCurrentStore = (rows) => {
-            if (!rows) return [];
-            return rows.filter(r => {
-                if (r.store_id !== undefined && r.store_id !== null) {
-                    return String(r.store_id) === String(currentStoreId);
-                }
-                return String(currentStoreId) === '1';
-            });
-        };
+        // Strict Store Isolation: सिर्फ currentStoreId का डेटा ही डेटाबेस से लाएं
+        const { data: groups } = await supabaseClient
+            .from('groups')
+            .select('*')
+            .eq('store_id', currentStoreId)
+            .order('id');
+        groupsList = groups || [];
 
-        const { data: groups } = await supabaseClient.from('groups').select('*').order('id');
-        groupsList = filterByCurrentStore(groups);
+        const { data: categories } = await supabaseClient
+            .from('categories')
+            .select('*')
+            .eq('store_id', currentStoreId)
+            .order('id');
+        categoriesList = categories || [];
 
-        const { data: categories } = await supabaseClient.from('categories').select('*').order('id');
-        categoriesList = filterByCurrentStore(categories);
+        const { data: products } = await supabaseClient
+            .from('products')
+            .select('*')
+            .eq('store_id', currentStoreId)
+            .order('id', { ascending: false });
+        productsList = products || [];
 
-        const { data: products } = await supabaseClient.from('products').select('*').order('id', { ascending: false });
-        productsList = filterByCurrentStore(products);
         if ($('dashProdCountBadge')) $('dashProdCountBadge').innerText = productsList.length;
         if ($('profileTotalProdCount')) $('profileTotalProdCount').innerText = productsList.length;
 
         if (isOwner) {
-            const { data: ledger } = await supabaseClient.from('ledger_entries').select('*').order('id');
-            const storeLedger = filterByCurrentStore(ledger);
+            const { data: ledger } = await supabaseClient
+                .from('ledger_entries')
+                .select('*')
+                .eq('store_id', currentStoreId)
+                .order('id');
+            const storeLedger = ledger || [];
             const tbody = $('ledgerTableBody');
             if (tbody) {
                 tbody.innerHTML = '';
@@ -259,6 +266,8 @@ async function loadAllDataFromSupabase() {
         console.error("Supabase data load error:", err);
     }
 }
+
+
 
 function routeInitialScreen() {
     const params = new URLSearchParams(window.location.search);

@@ -1476,24 +1476,84 @@ async function delProd(id) {
     switchScreen('viewCatalogueScreen');
 }
 
+
 /* ---------- Cart ---------- */
-function saveCart() { localStorage.setItem('cart', JSON.stringify(cart)); updateCartBadge(); }
-function addCart(id) { const c = cart.find(x => x.id == id); c ? c.q++ : cart.push({ id, q: 1 }); saveCart(); alertBox('Added to Cart'); }
-function updateCartBadge() { const n = cart.reduce((a, c) => a + c.q, 0), b = $('cartBadge'); if (b) { b.textContent = n; b.classList.toggle('hidden', !n); } }
-function chQ(id, d) { const c = cart.find(x => x.id == id); c.q += d; if (c.q < 1) cart = cart.filter(x => x.id != id); saveCart(); openCart(); }
-function cartRows() { return cart.map(c => ({ p: productsList.find(x => x.id == c.id), q: c.q })).filter(r => r.p); }
-function openCart() {
-    const rows = cartRows(), total = rows.reduce((a, r) => a + pnum(r.p) * r.q, 0);
-    modal(`<h3 class="font-bold text-base">Your Cart</h3>` + (rows.length ? rows.map(r => `<div class="flex items-center gap-3"><img src="${pimg(r.p)}" class="w-12 h-12 rounded-xl object-cover"><div class="flex-1 text-xs"><b>${q(r.p.name)}</b><br>${q(r.p.price)}</div><button onclick="chQ(${r.p.id},-1)" class="w-7 h-7 border rounded-full">−</button><b>${r.q}</b><button onclick="chQ(${r.p.id},1)" class="w-7 h-7 border rounded-full">+</button></div>`).join('')
-        + `<div class="font-bold text-right text-sm">Total: ₹${total.toLocaleString('en-IN')}</div><button onclick="sendOrder()" class="${BTN}"><i class="fa-brands fa-whatsapp"></i> Send Inquiry / Order</button>` : '<p class="text-xs text-slate-500">Cart is empty.</p>'));
+function saveCart() { 
+    localStorage.setItem('cart', JSON.stringify(cart)); 
+    updateCartBadge(); 
 }
+
+function addCart(id) { 
+    const c = cart.find(x => x.id == id); 
+    c ? c.q++ : cart.push({ id, q: 1 }); 
+    saveCart(); 
+    alertBox('Added to Cart'); 
+}
+
+function cartRows() { 
+    // सिर्फ वही आइटम्स रखें जो current store की productsList में सच में मौजूद हैं
+    const validRows = cart
+        .map(c => ({ p: productsList.find(x => x.id == c.id), q: c.q }))
+        .filter(r => r.p);
+    
+    // अगर कोई डिलीटेड प्रोडक्ट मिला, तो उसे cart और localStorage से तुरंत साफ़ करें
+    if (validRows.length !== cart.length) {
+        cart = validRows.map(r => ({ id: r.p.id, q: r.q }));
+        localStorage.setItem('cart', JSON.stringify(cart));
+    }
+    return validRows; 
+}
+
+function updateCartBadge() { 
+    const validRows = cartRows();
+    const n = validRows.reduce((a, r) => a + r.q, 0); 
+    const b = $('cartBadge'); 
+    if (b) { 
+        b.textContent = n; 
+        b.classList.toggle('hidden', n === 0); 
+    } 
+}
+
+function chQ(id, d) { 
+    const c = cart.find(x => x.id == id); 
+    if (c) {
+        c.q += d; 
+        if (c.q < 1) cart = cart.filter(x => x.id != id); 
+    }
+    saveCart(); 
+    openCart(); 
+}
+
+function openCart() {
+    const rows = cartRows();
+    const total = rows.reduce((a, r) => a + pnum(r.p) * r.q, 0);
+    
+    modal(`<h3 class="font-bold text-base">Your Cart</h3>` + 
+        (rows.length ? rows.map(r => `
+            <div class="flex items-center gap-3">
+                <img src="${pimg(r.p)}" class="w-12 h-12 rounded-xl object-cover">
+                <div class="flex-1 text-xs"><b>${q(r.p.name)}</b><br>${q(r.p.price)}</div>
+                <button onclick="chQ(${r.p.id},-1)" class="w-7 h-7 border rounded-full">−</button>
+                <b>${r.q}</b>
+                <button onclick="chQ(${r.p.id},1)" class="w-7 h-7 border rounded-full">+</button>
+            </div>`).join('')
+        + `<div class="font-bold text-right text-sm">Total: ₹${total.toLocaleString('en-IN')}</div>
+           <button onclick="sendOrder()" class="${BTN}"><i class="fa-brands fa-whatsapp"></i> Send Inquiry / Order</button>` 
+        : '<p class="text-xs text-slate-500">Cart is empty.</p>'));
+}
+
 function sendOrder() {
     const rows = cartRows();
     let t = `Hello ${S.name},\n\nI want to inquire/order these products:\n\n`, total = 0;
-    rows.forEach((r, i) => { total += pnum(r.p) * r.q; t += `${i + 1}. *${r.p.name}*\nCode: ${pcode(r.p)} | Qty: ${r.q} | Price: ${r.p.price}\nLink: ${prodLink(r.p.id)}\n\n`; });
+    rows.forEach((r, i) => { 
+        total += pnum(r.p) * r.q; 
+        t += `${i + 1}. *${r.p.name}*\nCode: ${pcode(r.p)} | Qty: ${r.q} | Price: ${r.p.price}\nLink: ${prodLink(r.p.id)}\n\n`; 
+    });
     t += `Total: ₹${total.toLocaleString('en-IN')}\n\nPlease provide more details.`;
     wa(ownerNo(), t);
 }
+
+
 
 /* ---------- QR Code ---------- */
 function openQR() {

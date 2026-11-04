@@ -2,8 +2,8 @@
    0. SUPABASE CONFIGURATION
    ========================================== */
 // Yahan apna Supabase URL aur Anon Key paste karein:
-const SUPABASE_URL = 'https://nunelbjxhnrenhsyiqpm.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_ULneCUgMjojvZOt-wuQxhw_xyiihVBP';
+const SUPABASE_URL = 'https://hbsvhyiasgpuwxbkytkd.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_D9T2ML4EXmx1mdu6qwkMVQ_WU49_Z6M';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 

@@ -91,7 +91,14 @@ async function initializeMultiStoreSession() {
     if (!loggedInStoreId) {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session && session.user) {
-            loggedInStoreId = session.user.id;
+            const { data: storeData } = await supabaseClient
+                .from('store_settings')
+                .select('id')
+                .eq('user_id', session.user.id)
+                .maybeSingle();
+            if (storeData) {
+                loggedInStoreId = storeData.id;
+            }
         }
     }
 
@@ -106,6 +113,8 @@ async function initializeMultiStoreSession() {
     isOwner = Boolean(loggedInStoreId && String(loggedInStoreId) === String(currentStoreId));
     updateAuthUIVisibility();
 }
+;
+
 
 function updateAuthUIVisibility() {
     const ownerWrapper = $('ownerDashboardWrapper');
@@ -475,7 +484,6 @@ async function handleAuthSubmit() {
     const usernameInput = $('authUsernameInput').value.trim();
     const password = $('authPasswordInput').value.trim();
 
-    // Input Validation
     if (!usernameInput || !password) {
         return alertBox('Please enter both username/email and password!');
     }
@@ -500,7 +508,7 @@ async function handleAuthSubmit() {
             return alertBox('Please enter a valid 10-digit mobile number.');
         }
 
-        // Secure Signup via Supabase Auth
+        // 1. Signup via Supabase Auth
         const { data: authData, error: authErr } = await supabaseClient.auth.signUp({
             email: loginEmail,
             password: password,
@@ -513,35 +521,41 @@ async function handleAuthSubmit() {
             return alertBox('Registration error: ' + (authErr?.message || 'Could not sign up.'));
         }
 
-        const storeUUID = authData.user.id;
+        const userUUID = authData.user.id;
 
+        // 2. Insert into store_settings (id auto-generate hoga, user_id mein UUID jayega)
         const newStorePayload = {
-            id: storeUUID,
+            user_id: userUUID,
             store_name: storeName,
             owner_name: ownerName,
             mobile: mobile,
             whatsapp: mobile,
             email: loginEmail,
+            username: usernameInput,
             address: 'Not Provided',
             gold_rate_24k: 75000,
             silver_rate_kg: 90000,
             updated_at: new Date().toISOString()
         };
 
-        const { error: storeErr } = await supabaseClient
+        const { data: insertedStore, error: storeErr } = await supabaseClient
             .from('store_settings')
-            .insert([newStorePayload]);
+            .insert([newStorePayload])
+            .select()
+            .single();
 
-        if (storeErr) {
-            console.error(storeErr);
-            return alertBox('Error creating store profile in database.');
+        if (storeErr || !insertedStore) {
+            console.error("Supabase Insert Error:", storeErr);
+            return alertBox('Error: ' + (storeErr?.message || 'Error creating store profile in database.'));
         }
 
-        loggedInStoreId = storeUUID;
-        currentStoreId = storeUUID;
+        // Store ki auto-generated numeric ID use karein
+        loggedInStoreId = insertedStore.id;
+        currentStoreId = insertedStore.id;
         isOwner = true;
         localStorage.setItem('ubc_owner_session', JSON.stringify({
-            store_id: storeUUID,
+            store_id: insertedStore.id,
+            user_id: userUUID,
             username: loginEmail
         }));
 
@@ -551,7 +565,7 @@ async function handleAuthSubmit() {
         switchScreen('dashboardScreen');
         alertBox(`Welcome! "${storeName}" is now live.`);
     } else {
-        // Secure Login via Supabase Auth
+        // 1. Login via Supabase Auth
         const { data: authData, error: authErr } = await supabaseClient.auth.signInWithPassword({
             email: loginEmail,
             password: password
@@ -561,11 +575,21 @@ async function handleAuthSubmit() {
             return alertBox('Invalid username/email or password!');
         }
 
-        loggedInStoreId = authData.user.id;
-        currentStoreId = authData.user.id;
+        // 2. user_id se store ki numeric id निकाले
+        const { data: storeData, error: fetchErr } = await supabaseClient
+            .from('store_settings')
+            .select('id')
+            .eq('user_id', authData.user.id)
+            .maybeSingle();
+
+        const storeIdToUse = storeData ? storeData.id : 1;
+
+        loggedInStoreId = storeIdToUse;
+        currentStoreId = storeIdToUse;
         isOwner = true;
         localStorage.setItem('ubc_owner_session', JSON.stringify({
-            store_id: authData.user.id,
+            store_id: storeIdToUse,
+            user_id: authData.user.id,
             username: loginEmail
         }));
 
@@ -575,7 +599,10 @@ async function handleAuthSubmit() {
         switchScreen('dashboardScreen');
         alertBox('Logged in successfully!');
     }
-}
+               }
+           
+            
+
 
 /* ==========================================
    7. SHARE & COPY LINK MODAL

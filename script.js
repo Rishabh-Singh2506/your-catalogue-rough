@@ -1694,3 +1694,112 @@ function buildRates() {
 }
 
 function setPur(k, n, v) { S.extra[k][n] = parseFloat(v) || 0; buildRates(); }
+
+// Step 1: Email par OTP bhejne ke liye
+async function sendOtpCode() {
+    const email = document.getElementById('authUsernameInput').value.trim();
+    if (!email || !email.includes('@')) {
+        return alertBox('Kripya ek valid email address enter karein.');
+    }
+
+    const { error } = await supabaseClient.auth.signInWithOtp({
+        email: email,
+        options: { shouldCreateUser: true }
+    });
+
+    if (error) {
+        return alertBox('OTP bhejne mein error aayi: ' + error.message);
+    }
+
+    // Email step chhupayein aur OTP step dikhayein
+    document.getElementById('emailStep').classList.add('hidden');
+    document.getElementById('otpStep').classList.remove('hidden');
+    alertBox('OTP aapke email par bhej diya gaya hai!');
+}
+
+// Back button agar email change karni ho
+function backToEmailStep() {
+    document.getElementById('otpStep').classList.add('hidden');
+    document.getElementById('emailStep').classList.remove('hidden');
+}
+
+// Step 2: OTP Verify karne aur store banane ke liye
+async function verifyOtpAndRegister() {
+    const email = document.getElementById('authUsernameInput').value.trim();
+    const token = document.getElementById('authOtpInput').value.trim();
+
+    if (!token || token.length < 6) {
+        return alertBox('Kripya pura 6-digit OTP enter karein.');
+    }
+
+    const { data, error } = await supabaseClient.auth.verifyOtp({
+        email: email,
+        token: token,
+        type: 'email'
+    });
+
+    if (error || !data.user) {
+        return alertBox('Galat OTP ya verification fail ho gaya: ' + (error?.message || 'Unknown error'));
+    }
+
+    const userUUID = data.user.id;
+    const storeName = document.getElementById('authStoreNameInput') ? document.getElementById('authStoreNameInput').value.trim() : "My Store";
+    const ownerName = document.getElementById('authOwnerNameInput') ? document.getElementById('authOwnerNameInput').value.trim() : "Owner";
+    const mobile = document.getElementById('authMobileInput') ? document.getElementById('authMobileInput').value.trim() : "";
+
+    if (authMode === 'signup') {
+        const newStorePayload = {
+            user_id: userUUID,
+            store_name: storeName,
+            owner_name: ownerName,
+            mobile: mobile,
+            whatsapp: mobile,
+            email: email, // Yahi email database mein user ka email ban jayega
+            username: email,
+            address: 'Not Provided',
+            gold_rate_24k: 75000,
+            silver_rate_kg: 90000,
+            updated_at: new Date().toISOString()
+        };
+
+        const { data: insertedStore, error: storeErr } = await supabaseClient
+            .from('store_settings')
+            .insert([newStorePayload])
+            .select()
+            .maybeSingle();
+
+        if (storeErr && !storeErr.message.includes('duplicate')) {
+            console.error("Store Insert Error:", storeErr);
+        }
+    }
+
+    // Fetch store id
+    const { data: storeData } = await supabaseClient
+        .from('store_settings')
+        .select('id')
+        .eq('user_id', userUUID)
+        .maybeSingle();
+
+    const storeIdToUse = storeData ? storeData.id : 1;
+
+    loggedInStoreId = storeIdToUse;
+    currentStoreId = storeIdToUse;
+    isOwner = true;
+    localStorage.setItem('ubc_owner_session', JSON.stringify({
+        store_id: storeIdToUse,
+        user_id: userUUID,
+        username: email
+    }));
+
+    closeModals();
+    window.history.replaceState({}, '', `${BASE()}?store=${currentStoreId}`);
+    await loadAllDataFromSupabase();
+    switchScreen('dashboardScreen');
+    alertBox('Login successful! Email verified.');
+           }
+
+
+
+
+
+

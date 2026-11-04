@@ -1528,13 +1528,22 @@ function dlQR() {
 
 /* ---------- Customers ---------- */
 async function loadCustomers() {
-    const { data } = await supabaseClient.from('customers').select('*').order('id', { ascending: false });
-    customers = (data || []).filter(c => !c.store_id || String(c.store_id) === String(currentStoreId));
+    const { data } = await supabaseClient
+        .from('customers')
+        .select('*')
+        .eq('store_id', currentStoreId)
+        .order('id', { ascending: false });
+        
+    customers = data || [];
     const b = document.querySelector('#contentCustomers .grid > div span');
     if (b) b.textContent = customers.length;
     const rc = document.querySelector('#contentCustomers .bg-white.p-4 p');
     if (rc) rc.innerHTML = customers.length ? customers.slice(0, 5).map(c => `${q(c.name)} - ${q(c.mobile)}`).join('<br>') : 'No recent customer interactions found. Start by adding a customer above.';
 }
+
+
+
+   
 function addCustomerForm() {
     modal(`<h3 class="font-bold text-base">Add Customer</h3><input id="cuName" placeholder="Customer Name" class="${INP}"><input id="cuMob" type="tel" placeholder="Mobile Number" class="${INP}"><input id="cuAddr" placeholder="Address" class="${INP}"><button onclick="saveCustomer()" class="${BTN}">Save Customer</button>`);
 }

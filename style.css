@@ -1,0 +1,147 @@
+/* ==========================================
+   GLOBAL STYLES & FONT CONFIGURATION
+   ========================================== */
+:root {
+    --theme: #d4af37;
+}
+
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f3f4f6;
+    touch-action: manipulation;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100dvh;
+    overflow-x: hidden;
+}
+
+/* ==========================================
+   THEME OVERRIDES
+   ========================================== */
+.bg-\[\#d4af37\] {
+    background-color: var(--theme) !important;
+}
+
+.theme-btn {
+    background: var(--theme);
+    color: #ffffff;
+}
+
+.fixed.top-4.left-1\/2 {
+    z-index: 300 !important;
+}
+
+/* ==========================================
+   SCROLLBAR UTILITIES
+   ========================================== */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Custom slim scrollbar for categories & screens so nothing gets hidden */
+#catalogueCategoriesBar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+#catalogueCategoriesBar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+}
+
+/* ==========================================
+   MOBILE & DESKTOP RESPONSIVE CONTAINER FIXES
+   ========================================== */
+#appMainContainer {
+    width: 100%;
+    max-width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure all screen overlays scroll smoothly and buttons never get cut off */
+#viewCatalogueScreen,
+#ownerDashboardWrapper,
+#contentCatalogue,
+#contentCustomers,
+#contentFinance,
+#addProductScreen,
+#storeProfileScreen,
+#editProfileScreen,
+#categoriesScreen,
+#metalRatesScreen,
+#settingsScreen,
+#productDetailScreen {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    padding-bottom: 5.5rem !important;
+}
+
+/* Ensure Slideshow & Categories are always visible on Mobile & Desktop */
+#catalogueSlideshowWrapper {
+    display: block;
+    width: 100%;
+}
+
+#catalogueSlideshow {
+    width: 100%;
+    min-height: 9.5rem;
+}
+
+#catalogueCategoriesBar {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem;
+    max-height: 8.5rem;
+    overflow-y: auto;
+    align-items: center;
+}
+
+/* Desktop & Tablet Responsive Expansion */
+@media (min-width: 768px) {
+    body {
+        padding: 0 !important;
+        background: #e2e8f0;
+    }
+
+    #appMainContainer,
+    body > div.max-w-md {
+        max-width: 1100px !important;
+        width: 100% !important;
+        height: 100vh !important;
+        min-height: 100vh !important;
+        border-radius: 0 !important;
+    }
+
+    #hamburgerSidebar {
+        width: 20rem;
+    }
+
+    #catalogueSlideshow {
+        height: 14rem !important;
+    }
+
+    #catalogueProductsArea {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (min-width: 1024px) {
+    #catalogueProductsArea {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    }
+}

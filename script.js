@@ -802,6 +802,10 @@ function toggleClientSearchBar() {
     }
 }
 
+
+
+
+
 function filterCatalogueProductsBySearch(query) {
     renderCatalogueProducts(_cat, (query || '').toLowerCase().trim());
 }
@@ -812,6 +816,11 @@ window.addEventListener('click', function (e) {
         menu.classList.add('hidden');
     }
 });
+
+
+
+
+
 
 function handleImageUpload(event) {
     const files = event.target.files;
@@ -1695,17 +1704,19 @@ function buildRates() {
 
 function setPur(k, n, v) { S.extra[k][n] = parseFloat(v) || 0; buildRates(); }
 
+
+
 async function sendOtpCode() {
     const email = document.getElementById('authUsernameInput').value.trim();
     if (!email || !email.includes('@')) {
         return alertBox('Kripya sahi email address enter karein.');
     }
 
+    // Supabase Auth API call for explicit 6-digit OTP token generation
     const { error } = await supabaseClient.auth.signInWithOtp({
         email: email,
         options: {
-            shouldCreateUser: true,
-            emailRedirectTo: null // Yeh ensure karega ki magic link ki jagah OTP generate ho
+            shouldCreateUser: true
         }
     });
 
@@ -1720,13 +1731,14 @@ async function sendOtpCode() {
 
 
 
+
 // Back button agar email change karni ho
 function backToEmailStep() {
     document.getElementById('otpStep').classList.add('hidden');
     document.getElementById('emailStep').classList.remove('hidden');
 }
 
-// Step 2: OTP Verify karne aur store banane ke liye
+
 async function verifyOtpAndRegister() {
     const email = document.getElementById('authUsernameInput').value.trim();
     const token = document.getElementById('authOtpInput').value.trim();
@@ -1757,7 +1769,7 @@ async function verifyOtpAndRegister() {
             owner_name: ownerName,
             mobile: mobile,
             whatsapp: mobile,
-            email: email, // Yahi email database mein user ka email ban jayega
+            email: email,
             username: email,
             address: 'Not Provided',
             gold_rate_24k: 75000,
@@ -1776,7 +1788,6 @@ async function verifyOtpAndRegister() {
         }
     }
 
-    // Fetch store id
     const { data: storeData } = await supabaseClient
         .from('store_settings')
         .select('id')
@@ -1799,7 +1810,7 @@ async function verifyOtpAndRegister() {
     await loadAllDataFromSupabase();
     switchScreen('dashboardScreen');
     alertBox('Login successful! Email verified.');
-           }
+}
 
 
 

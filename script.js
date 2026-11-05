@@ -1695,27 +1695,30 @@ function buildRates() {
 
 function setPur(k, n, v) { S.extra[k][n] = parseFloat(v) || 0; buildRates(); }
 
-// Step 1: Email par OTP bhejne ke liye
 async function sendOtpCode() {
     const email = document.getElementById('authUsernameInput').value.trim();
     if (!email || !email.includes('@')) {
-        return alertBox('Kripya ek valid email address enter karein.');
+        return alertBox('Kripya sahi email address enter karein.');
     }
 
     const { error } = await supabaseClient.auth.signInWithOtp({
         email: email,
-        options: { shouldCreateUser: true }
+        options: {
+            shouldCreateUser: true,
+            emailRedirectTo: null // Yeh ensure karega ki magic link ki jagah OTP generate ho
+        }
     });
 
     if (error) {
         return alertBox('OTP bhejne mein error aayi: ' + error.message);
     }
 
-    // Email step chhupayein aur OTP step dikhayein
     document.getElementById('emailStep').classList.add('hidden');
     document.getElementById('otpStep').classList.remove('hidden');
-    alertBox('OTP aapke email par bhej diya gaya hai!');
+    alertBox('6-digit OTP aapke email par bhej diya gaya hai!');
 }
+
+
 
 // Back button agar email change karni ho
 function backToEmailStep() {

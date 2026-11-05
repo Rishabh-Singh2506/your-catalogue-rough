@@ -809,7 +809,6 @@ function toggleClientSearchBar() {
 function filterCatalogueProductsBySearch(query) {
     renderCatalogueProducts(_cat, (query || '').toLowerCase().trim());
 }
-
 window.addEventListener('click', function (e) {
     const menu = $('catalogueOptionsMenu');
     if (menu && !menu.classList.contains('hidden') && !e.target.closest('.fa-ellipsis-vertical') && !e.target.closest('#catalogueOptionsMenu')) {
@@ -1002,6 +1001,9 @@ function renderCatalogueCategories() {
     bar.innerHTML = allChip + catChips;
 }
 
+
+
+
 function renderCatalogueProducts(cat = null, qs = '') {
     _cat = cat;
     renderCatalogueCategories();
@@ -1009,7 +1011,13 @@ function renderCatalogueProducts(cat = null, qs = '') {
     const area = $('catalogueProductsArea');
     if (!area) return;
     const v = S.extra.view;
-    const list = productsList.filter(p => (!cat || p.category === cat) && (!qs || (p.name + p.category + pcode(p)).toLowerCase().includes(qs)));
+    
+    // Database se aayi hui productsList par proper filtering apply karna
+    const list = productsList.filter(p => {
+        const matchCat = (!cat || p.category === cat);
+        const matchSearch = (!qs || (p.name + ' ' + (p.category || '') + ' ' + pcode(p)).toLowerCase().includes(qs));
+        return matchCat && matchSearch;
+    });
 
     area.className = 'w-full grid grid-cols-2 gap-3 pb-6';
 
@@ -1046,7 +1054,10 @@ function renderCatalogueProducts(cat = null, qs = '') {
         </div>
       </div>
     </div>`).join('');
-}
+    }
+   
+
+
 
 /* ==========================================
    12. GROUPS & CATEGORIES CRUD
